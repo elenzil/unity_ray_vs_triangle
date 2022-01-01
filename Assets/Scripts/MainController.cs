@@ -24,6 +24,15 @@ public class MainController : MonoBehaviour
     [SerializeField]
     private Material MaterialNoIntersection;
 
+    enum IntersectionAlgorithmType
+    {
+        one,
+        two,
+    }
+
+    [SerializeField]
+    private IntersectionAlgorithmType IntersectionAlgorithm;
+
     private void Start()
     {
         if (TriangleCorners.Length != 3)
@@ -45,18 +54,38 @@ public class MainController : MonoBehaviour
     {
         Vector3 dir = (RayMarkers[1].position - RayMarkers[0].position).normalized;
         Ray ray = new Ray(RayMarkers[0].position, dir);
-        float t = IntersectionMath.IntersectRayTriangle(ray, TriangleCorners[0].position, TriangleCorners[1].position, TriangleCorners[2].position);
 
-        if (float.IsNaN(t))
+        if (IntersectionAlgorithm == IntersectionAlgorithmType.one)
         {
-            TheRay.material = MaterialNoIntersection;
-            TheIntersection.SetActive(false);
+            float t = IntersectionMath.IntersectRayTriangle(ray, TriangleCorners[0].position, TriangleCorners[1].position, TriangleCorners[2].position);
+
+            if (!float.IsNaN(t))
+            {
+                TheRay.material = MaterialIntersection;
+                TheIntersection.SetActive(true);
+                TheIntersection.transform.position = ray.origin + t * ray.direction;
+            }
+            else
+            {
+                TheRay.material = MaterialNoIntersection;
+                TheIntersection.SetActive(false);
+            }
         }
         else
         {
-            TheRay.material = MaterialIntersection;
-            TheIntersection.SetActive(true);
-            TheIntersection.transform.position = ray.origin + t * ray.direction;
+            Vector3 pos;
+            bool hasIntersection = IntersectionMath.IntersectRayTriangle(ray, TriangleCorners[0].position, TriangleCorners[1].position, TriangleCorners[2].position, out pos);
+            if (hasIntersection)
+            {
+                TheRay.material = MaterialIntersection;
+                TheIntersection.SetActive(true);
+                TheIntersection.transform.position = pos;
+            }
+            else
+            {
+                TheRay.material = MaterialNoIntersection;
+                TheIntersection.SetActive(false);
+            }
         }
     }
 
